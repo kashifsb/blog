@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import SearchBar from '@/components/SearchBar'
 
 interface User {
@@ -31,23 +30,14 @@ interface Post {
   }
 }
 
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  pages: number
-}
-
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([])
-  const [pagination, setPagination] = useState<Pagination | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [initialized, setInitialized] = useState(false)
-  const router = useRouter()
 
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token')
@@ -85,7 +75,6 @@ export default function HomePage() {
         } else {
           setPosts(prev => [...prev, ...data.posts])
         }
-        setPagination(data.pagination)
         setHasMore(data.pagination.page < data.pagination.pages)
       }
     } catch (error) {
@@ -526,7 +515,7 @@ function PostCard({ post, user }: { post: Post; user: User | null }) {
   )
 }
 
-function FeaturedPostCard({ post, user }: { post: Post; user: User | null }) {
+function FeaturedPostCard({ post, user: _user }: { post: Post; user: User | null }) {
   return (
     <article className="card-professional rounded-2xl overflow-hidden group border-2 border-yellow-200">
       <div className="p-6">

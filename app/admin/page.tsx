@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 
 interface Analytics {
@@ -9,20 +9,33 @@ interface Analytics {
   totalComments: number
 }
 
+interface User {
+  id: string
+  name: string | null
+  email: string
+  role: 'ADMIN' | 'USER'
+}
+
+interface Post {
+  id: string
+  title: string
+  status: 'DRAFT' | 'PUBLISHED'
+  accessLevel: 'PUBLIC' | 'INTERNAL' | 'PRIVATE'
+  author: {
+    name: string | null
+    email: string
+  }
+}
+
 export default function AdminPage() {
-  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'users' | 'posts' | 'analytics'>('users')
-  const [users, setUsers] = useState([])
-  const [posts, setPosts] = useState([])
+  const [users, setUsers] = useState<User[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token')
     if (!token) {
       window.location.href = '/login'
@@ -38,15 +51,18 @@ export default function AdminPage() {
           window.location.href = '/'
           return
         }
-        setUser(userData.user)
         fetchData()
       } else {
         window.location.href = '/login'
       }
-    } catch (err) {
+    } catch {
       setError('Failed to authenticate')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   const fetchData = async () => {
     setLoading(true)
@@ -63,7 +79,7 @@ export default function AdminPage() {
       setUsers(usersData.users || [])
       setPosts(postsData.posts || [])
       setAnalytics(analyticsData.analytics || null)
-    } catch (err) {
+    } catch {
       setError('Failed to load admin data')
     } finally {
       setLoading(false)
@@ -149,7 +165,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {users.map((u: any) => (
+                  {users.map((u: User) => (
                     <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-slate-900">{u.name || u.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-700">{u.email}</td>
@@ -184,7 +200,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {posts.map((p: any) => (
+                  {posts.map((p: Post) => (
                     <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-slate-900 font-medium">{p.title}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-700">{p.author?.name || p.author?.email}</td>

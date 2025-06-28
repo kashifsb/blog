@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -36,17 +36,7 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (user) {
-      fetchNotes()
-    }
-  }, [user])
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/login')
@@ -67,7 +57,17 @@ export default function NotesPage() {
       console.error('Error checking auth:', error)
       router.push('/login')
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  useEffect(() => {
+    if (user) {
+      fetchNotes()
+    }
+  }, [user])
 
   const fetchNotes = async () => {
     try {
@@ -270,8 +270,6 @@ function NoteCard({
   onTogglePin: (id: string, isPinned: boolean) => void
   onToggleArchive: (id: string, isArchived: boolean) => void
 }) {
-  const [isHovered, setIsHovered] = useState(false)
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -292,8 +290,6 @@ function NoteCard({
     return (
       <div 
         className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -383,8 +379,6 @@ function NoteCard({
   return (
     <div 
       className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 group cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Color Bar */}
       <div 

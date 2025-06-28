@@ -19,12 +19,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause based on user authentication
-    let whereClause: any = {
+    const whereClause = {
       OR: [
         { title: { contains: query, mode: 'insensitive' } },
         { content: { contains: query, mode: 'insensitive' } },
       ],
-    }
+    } as any
 
     // Filter by access level based on user authentication
     if (user) {

@@ -9,7 +9,8 @@ import Underline from '@tiptap/extension-underline'
 import Highlight from '@tiptap/extension-highlight'
 import CodeBlock from '@tiptap/extension-code-block'
 import Placeholder from '@tiptap/extension-placeholder'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
+import type { Editor } from '@tiptap/react'
 
 interface RichTextEditorProps {
   content: string
@@ -17,7 +18,7 @@ interface RichTextEditorProps {
   placeholder?: string
 }
 
-const MenuBar = ({ editor }: { editor: any }) => {
+const MenuBar = ({ editor }: { editor: Editor | null }) => {
   const [imageUrl, setImageUrl] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [showImageInput, setShowImageInput] = useState(false)

@@ -59,7 +59,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { title, content, color, isPinned, isArchived, tags } = await request.json()
+    const { title, content, color, isPinned, isArchived } = await request.json()
 
     // Check if note exists and belongs to user
     const existingNote = await prisma.note.findFirst({
@@ -73,7 +73,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Note not found' }, { status: 404 })
     }
 
-    const updateData: any = {}
+    const updateData: {
+      title?: string
+      content?: string
+      color?: string
+      isPinned?: boolean
+      isArchived?: boolean
+    } = {}
     if (title !== undefined) updateData.title = title
     if (content !== undefined) updateData.content = content
     if (color !== undefined) updateData.color = color

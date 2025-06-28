@@ -1,26 +1,29 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
+
+interface User {
+  id: string
+  email: string
+  name: string | null
+  role: 'ADMIN' | 'USER'
+}
 
 export default function CreatePostPage() {
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
-  const [accessLevel, setAccessLevel] = useState('PUBLIC')
-  const [status, setStatus] = useState('PUBLISHED')
+  const [accessLevel, setAccessLevel] = useState<'PUBLIC' | 'INTERNAL' | 'PRIVATE'>('PUBLIC')
+  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED'>('PUBLISHED')
   const [featured, setFeatured] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/login')
@@ -41,7 +44,11 @@ export default function CreatePostPage() {
       console.error('Error checking auth:', error)
       router.push('/login')
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -185,7 +192,7 @@ export default function CreatePostPage() {
                 </label>
                 <select
                   value={accessLevel}
-                  onChange={(e) => setAccessLevel(e.target.value)}
+                  onChange={(e) => setAccessLevel(e.target.value as 'PUBLIC' | 'INTERNAL' | 'PRIVATE')}
                   className="w-full px-4 py-3 input-professional rounded-xl"
                   aria-label="Access Level"
                 >
@@ -201,7 +208,7 @@ export default function CreatePostPage() {
                 </label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={(e) => setStatus(e.target.value as 'DRAFT' | 'PUBLISHED')}
                   className="w-full px-4 py-3 input-professional rounded-xl"
                   aria-label="Status"
                 >

@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 
 interface Note {
   id: string
@@ -34,8 +36,9 @@ export default function EditNotePage() {
   const [color, setColor] = useState('#3B82F6')
   const [isPinned, setIsPinned] = useState(false)
   const [isArchived, setIsArchived] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [user, setUser] = useState<User | null>(null)
   const [note, setNote] = useState<Note | null>(null)
   const router = useRouter()
@@ -53,17 +56,7 @@ export default function EditNotePage() {
     '#EC4899', // Pink
   ]
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (user && noteId) {
-      fetchNote()
-    }
-  }, [user, noteId])
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/login')
@@ -84,9 +77,9 @@ export default function EditNotePage() {
       console.error('Error checking auth:', error)
       router.push('/login')
     }
-  }
+  }, [router])
 
-  const fetchNote = async () => {
+  const fetchNote = useCallback(async () => {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(`/api/notes/${noteId}`, {
@@ -104,17 +97,24 @@ export default function EditNotePage() {
         setIsPinned(noteData.isPinned)
         setIsArchived(noteData.isArchived)
       } else {
-        alert('Note not found')
-        router.push('/notes')
+        setError('Failed to load note')
       }
     } catch (error) {
-      console.error('Error fetching note:', error)
-      alert('Failed to fetch note')
-      router.push('/notes')
+      setError('An error occurred while loading the note.')
     } finally {
-      setFetching(false)
+      setLoading(false)
     }
-  }
+  }, [noteId])
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  useEffect(() => {
+    if (user && noteId) {
+      fetchNote()
+    }
+  }, [user, noteId, fetchNote])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,7 +123,7 @@ export default function EditNotePage() {
       return
     }
 
-    setLoading(true)
+    setSaving(true)
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(`/api/notes/${noteId}`, {
@@ -151,11 +151,11 @@ export default function EditNotePage() {
       console.error('Error updating note:', error)
       alert('Failed to update note')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  if (fetching) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="glass-professional rounded-3xl p-8">
@@ -281,11 +281,11 @@ export default function EditNotePage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={loading}
+              disabled={saving}
               className="btn-professional px-8 py-4 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-busy={loading}
+              aria-busy={saving}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '../../../../lib/db'
 import { sendOTPEmail } from '../../../../lib/email'
-import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {

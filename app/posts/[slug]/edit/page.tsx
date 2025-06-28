@@ -1,36 +1,48 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
+
+interface User {
+  id: string
+  email: string
+  name: string | null
+  role: 'ADMIN' | 'USER'
+}
+
+interface Post {
+  id: string
+  title: string
+  excerpt: string | null
+  content: string
+  accessLevel: 'PUBLIC' | 'INTERNAL' | 'PRIVATE'
+  status: 'DRAFT' | 'PUBLISHED'
+  featured: boolean
+  author: {
+    id: string
+    email: string
+    name: string | null
+  }
+}
 
 export default function EditPostPage() {
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
-  const [accessLevel, setAccessLevel] = useState('PUBLIC')
-  const [status, setStatus] = useState('PUBLISHED')
+  const [accessLevel, setAccessLevel] = useState<'PUBLIC' | 'INTERNAL' | 'PRIVATE'>('PUBLIC')
+  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT')
   const [featured, setFeatured] = useState(false)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [post, setPost] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [post, setPost] = useState<Post | null>(null)
   const router = useRouter()
   const params = useParams()
   const slug = params.slug as string
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (user && slug) {
-      fetchPost()
-    }
-  }, [user, slug])
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/login')
@@ -51,9 +63,9 @@ export default function EditPostPage() {
       console.error('Error checking auth:', error)
       router.push('/login')
     }
-  }
+  }, [router])
 
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(`/api/posts/${slug}`, {
@@ -65,7 +77,7 @@ export default function EditPostPage() {
         const postData = data.post
         
         // Check if user owns this post
-        if (postData.author.email !== user.email && user.role !== 'ADMIN') {
+        if (postData.author.email !== user?.email && user?.role !== 'ADMIN') {
           alert('You do not have permission to edit this post')
           router.push(`/posts/${slug}`)
           return
@@ -89,7 +101,17 @@ export default function EditPostPage() {
     } finally {
       setFetching(false)
     }
-  }
+  }, [slug, user, router])
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  useEffect(() => {
+    if (user && slug) {
+      fetchPost()
+    }
+  }, [user, slug, fetchPost])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -232,7 +254,7 @@ export default function EditPostPage() {
                 </label>
                 <select
                   value={accessLevel}
-                  onChange={(e) => setAccessLevel(e.target.value)}
+                  onChange={(e) => setAccessLevel(e.target.value as 'PUBLIC' | 'INTERNAL' | 'PRIVATE')}
                   className="w-full px-4 py-3 input-professional rounded-xl"
                   aria-label="Access Level"
                 >
@@ -248,7 +270,7 @@ export default function EditPostPage() {
                 </label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={(e) => setStatus(e.target.value as 'DRAFT' | 'PUBLISHED')}
                   className="w-full px-4 py-3 input-professional rounded-xl"
                   aria-label="Status"
                 >

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -47,19 +47,7 @@ export default function PostPage() {
   const [comment, setComment] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      // Get user info from localStorage
-      const userData = localStorage.getItem('user')
-      if (userData) {
-        setUser(JSON.parse(userData))
-      }
-    }
-    fetchPost(token)
-  }, [params.slug])
-
-  const fetchPost = async (token?: string | null) => {
+  const fetchPost = useCallback(async (token?: string | null) => {
     setLoading(true)
     try {
       const headers: Record<string, string> = {}
@@ -96,7 +84,19 @@ export default function PostPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.slug])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      // Get user info from localStorage
+      const userData = localStorage.getItem('user')
+      if (userData) {
+        setUser(JSON.parse(userData))
+      }
+    }
+    fetchPost(token)
+  }, [fetchPost])
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
